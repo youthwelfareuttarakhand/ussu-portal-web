@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-scale: 1;
+}
+
+html {
+  font-size: calc(1rem * var(--font-scale));
+}
+
+body {
+  color: #1a1a2e;
+}
+
+html.high-contrast body {
+  color: #000000;
+}
+
+html.high-contrast .text-body {
+  color: #000000 !important;
+}
+
+html.high-contrast .text-secondary {
+  color: #0B3D91 !important;
+}
+
+html.high-contrast .border-slate-100,
+html.high-contrast .border-dashed {
+  border-color: #000000 !important;
+}
