@@ -1,4 +1,7 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// Browser calls stay same-origin (/api/*) so the Next.js rewrite in next.config.js
+// proxies to the backend server-side — that's what makes Set-Cookie land on this
+// domain instead of the API's, which is what the dashboard middleware checks.
+const API_URL = "/api";
 
 export class ApiError extends Error {
   status: number;
