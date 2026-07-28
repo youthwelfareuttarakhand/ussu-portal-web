@@ -15,11 +15,13 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   STUDENT: [...BASE_NAV, { label: "My Admission", href: "/admissions" }],
   STAFF: [
     ...BASE_NAV,
+    { label: "Registrations", href: "/registrations" },
     { label: "Admissions Queue", href: "/admissions" },
     { label: "Students", href: "/students" },
   ],
   ADMIN: [
     ...BASE_NAV,
+    { label: "Registrations", href: "/registrations" },
     { label: "Admissions Queue", href: "/admissions" },
     { label: "Students", href: "/students" },
     { label: "Staff", href: "/staff" },
@@ -34,6 +36,7 @@ const ROUTE_ROLES: Record<string, Role[]> = {
   "/profile": ["STUDENT", "STAFF", "ADMIN"],
   "/notices": ["STUDENT", "STAFF", "ADMIN"],
   "/admissions": ["STUDENT", "STAFF", "ADMIN"],
+  "/registrations": ["STAFF", "ADMIN"],
   "/students": ["STAFF", "ADMIN"],
   "/staff": ["ADMIN"],
   "/batches": ["ADMIN"],

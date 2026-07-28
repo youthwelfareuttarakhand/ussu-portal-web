@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, User, Bell, ClipboardList, Users, UserCog, CalendarRange, Menu, X, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, User, Bell, ClipboardList, FileEdit, Users, UserCog, CalendarRange, Menu, X, type LucideIcon } from "lucide-react";
 import { navForRole, type Role } from "@/lib/roles";
 
 const ICON_BY_HREF: Record<string, LucideIcon> = {
   "/dashboard": LayoutDashboard,
   "/profile": User,
   "/notices": Bell,
+  "/registrations": FileEdit,
   "/admissions": ClipboardList,
   "/students": Users,
   "/batches": CalendarRange,
