@@ -10,26 +10,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  // Registering is not the same as completing admission — a student's UKSSU
-  // ID and full portal access are issued the moment they finish the 5-step
-  // admission form on ussu-web's dashboard and pay the admission fee
-  // (Admission.paid), not on staff approval. Until then, show a holding page
-  // pointing them back to the admission form instead of the real dashboard.
+  // This portal is for staff/admin and for students who have actually been
+  // ADMITTED — i.e. issued a UKSSU ID by staff approval, not merely
+  // registered or paid the admission fee. Applicants mid-process (still
+  // filling the form, paid but awaiting review, or rejected) are blocked
+  // here and pointed back to the applicant dashboard on ussu-web instead.
   if (user.role === "STUDENT") {
     const admission = await serverApiFetch<Admission>("/admissions/me");
-    if (!admission?.paid) {
+    const ukssuId = admission?.student.user.ukssuId ?? null;
+    if (!ukssuId) {
+      const message =
+        admission?.status === "REJECTED"
+          ? "Your admission application was not approved. Contact the admissions office for details."
+          : admission?.paid
+            ? "Your admission fee is paid and your application is awaiting staff review. You'll get portal access once approved and issued a UKSSU ID."
+            : admission
+              ? "Finish your admission form and pay the admission fee on the applicant dashboard to be considered for admission."
+              : "Start your admission form on the applicant dashboard to be considered for admission.";
       return (
         <div className="flex min-h-screen items-center justify-center bg-surface p-6">
           <div className="flex max-w-md flex-col items-center rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
               <ClipboardList size={28} />
             </span>
-            <h1 className="mt-6 font-display text-xl uppercase tracking-wide text-ink">Admission Not Yet Complete</h1>
-            <p className="mt-2 text-sm text-muted">
-              {admission
-                ? "You still need to finish your admission form and pay the admission fee. You'll get full portal access — including your UKSSU ID — as soon as that's done."
-                : "Finish your admission form on the applicant dashboard to unlock full portal access."}
-            </p>
+            <h1 className="mt-6 font-display text-xl uppercase tracking-wide text-ink">Portal Access Not Yet Available</h1>
+            <p className="mt-2 text-sm text-muted">{message}</p>
           </div>
         </div>
       );
