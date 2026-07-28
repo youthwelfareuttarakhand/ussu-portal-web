@@ -12,6 +12,7 @@ html {
 
 body {
   color: #1a1a2e;
+  font-family: var(--font-body), sans-serif;
 }
 
 html.high-contrast body {
@@ -23,7 +24,7 @@ html.high-contrast .text-body {
 }
 
 html.high-contrast .text-secondary {
-  color: #0B3D91 !important;
+  color: #0A1E42 !important;
 }
 
 html.high-contrast .border-slate-100,

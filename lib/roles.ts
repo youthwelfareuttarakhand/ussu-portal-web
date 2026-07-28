@@ -23,6 +23,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: "Admissions Queue", href: "/admissions" },
     { label: "Students", href: "/students" },
     { label: "Staff", href: "/staff" },
+    { label: "Admission Batches", href: "/batches" },
   ],
 };
 
@@ -35,6 +36,7 @@ const ROUTE_ROLES: Record<string, Role[]> = {
   "/admissions": ["STUDENT", "STAFF", "ADMIN"],
   "/students": ["STAFF", "ADMIN"],
   "/staff": ["ADMIN"],
+  "/batches": ["ADMIN"],
 };
 
 export function navForRole(role: Role): NavItem[] {

@@ -18,7 +18,7 @@ export default async function StaffPage() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">Staff</h2>
+      <h2 className="font-display text-lg uppercase tracking-wide text-ink">Staff</h2>
       <div className="mt-4">
         <DataTable columns={columns} rows={staff} emptyLabel="No staff yet" />
       </div>
