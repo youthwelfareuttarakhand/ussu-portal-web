@@ -1,6 +1,8 @@
 import { redirect, notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { serverApiFetch } from "@/lib/server-api";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 import { Reveal } from "@/components/Reveal";
 import { StatusBadge } from "@/components/dashboard/DataTable";
 import { AdmissionReviewActions } from "@/components/dashboard/AdmissionReviewActions";
@@ -126,11 +128,26 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
           <div className="mt-6">
             <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.14em] text-primary">Documents</p>
             <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-4">
-              {admission.documents.map((doc) => (
-                <span key={doc.id} className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                  {doc.type.replace("_", " ")}
-                </span>
-              ))}
+              {admission.documents.map((doc) => {
+                const fileUrl = `${API_URL}/admissions/${admission.id}/documents/${doc.id}/file`;
+                return (
+                  <span
+                    key={doc.id}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 pl-3 pr-1.5 py-1 text-xs font-semibold text-primary"
+                  >
+                    <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                      {doc.type.replace("_", " ")}
+                    </a>
+                    <a
+                      href={`${fileUrl}?download=1`}
+                      title={`Download ${doc.filename}`}
+                      className="rounded-full px-1.5 py-0.5 text-primary/70 transition-colors hover:bg-primary/20 hover:text-primary"
+                    >
+                      ↓
+                    </a>
+                  </span>
+                );
+              })}
             </div>
           </div>
         )}

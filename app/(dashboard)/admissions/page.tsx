@@ -52,7 +52,12 @@ export default async function AdmissionsPage() {
     <div>
       <h2 className="font-display text-lg uppercase tracking-wide text-ink">Admissions Queue</h2>
       <div className="mt-4">
-        <DataTable columns={columns} rows={admissions} emptyLabel="No applications yet" />
+        <DataTable
+          columns={columns}
+          rows={admissions}
+          emptyLabel="No applications yet"
+          rowHref={(row) => `/admissions/${row.id}`}
+        />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
 import type { AdmissionStatus } from "@/types/api";
 
@@ -25,10 +26,12 @@ export function DataTable<T extends { id: string }>({
   columns,
   rows,
   emptyLabel = "Nothing here yet",
+  rowHref,
 }: {
   columns: Column<T>[];
   rows: T[];
   emptyLabel?: string;
+  rowHref?: (row: T) => string;
 }) {
   if (rows.length === 0) {
     return <p className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted">{emptyLabel}</p>;
@@ -48,15 +51,27 @@ export function DataTable<T extends { id: string }>({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-slate-100 transition-colors hover:bg-surface/60">
-                {columns.map((col) => (
-                  <td key={col.header} className="px-4 py-3 text-body">
-                    {col.accessor(row)}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {rows.map((row) => {
+              const href = rowHref?.(row);
+              return (
+                <tr
+                  key={row.id}
+                  className={`border-t border-slate-100 transition-colors hover:bg-surface/60 ${href ? "cursor-pointer" : ""}`}
+                >
+                  {columns.map((col) => (
+                    <td key={col.header} className="px-4 py-3 text-body">
+                      {href ? (
+                        <Link href={href} className="block">
+                          {col.accessor(row)}
+                        </Link>
+                      ) : (
+                        col.accessor(row)
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
