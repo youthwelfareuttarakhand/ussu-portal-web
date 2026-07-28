@@ -1,8 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { serverApiFetch } from "@/lib/server-api";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 import { Reveal } from "@/components/Reveal";
 import { StatusBadge } from "@/components/dashboard/DataTable";
 import { AdmissionReviewActions } from "@/components/dashboard/AdmissionReviewActions";
@@ -60,6 +58,7 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
           <Row label="District" value={applicant.district} />
           <Row label="Programme" value={applicant.programmeLevel} />
           <Row label="Course" value={applicant.programme} />
+          {admission.coachingDiscipline && <Row label="Coaching Discipline" value={admission.coachingDiscipline} />}
           <Row label="Batch" value={admission.batch.label} />
         </Section>
 
@@ -129,7 +128,7 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
             <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.14em] text-primary">Documents</p>
             <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-4">
               {admission.documents.map((doc) => {
-                const fileUrl = `${API_URL}/admissions/${admission.id}/documents/${doc.id}/file`;
+                const fileUrl = `/api/admissions/${admission.id}/documents/${doc.id}/file`;
                 return (
                   <span
                     key={doc.id}
