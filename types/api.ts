@@ -40,7 +40,8 @@ export type AdmissionApplicant = {
   id: string;
   rollNumber: string | null;
   programme: string | null;
-  district: string | null;
+  country: { id: string; name: string } | null;
+  state: { id: string; name: string } | null;
   programmeLevel: "UG" | "PG" | "DIPLOMA" | null;
   user: {
     fullName: string;
@@ -82,6 +83,7 @@ export type AdmissionAcademicDetails = {
   graduationDiscipline: string | null;
   graduationInstitution: string | null;
   graduationYear: number | null;
+  graduationStatus: string | null;
   graduationPercentage: number | null;
 } | null;
 

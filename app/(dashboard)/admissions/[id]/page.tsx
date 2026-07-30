@@ -55,10 +55,11 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
           <Row label="Date of Birth" value={applicant.user.dob ? new Date(applicant.user.dob).toLocaleDateString() : null} />
           <Row label="Registration No." value={applicant.user.registrationNumber} />
           <Row label="UKSSU ID" value={applicant.user.ukssuId} />
-          <Row label="District" value={applicant.district} />
+          <Row label="Country" value={applicant.country?.name} />
+          <Row label="State" value={applicant.state?.name} />
           <Row label="Programme" value={applicant.programmeLevel} />
           <Row label="Course" value={applicant.programme} />
-          {admission.coachingDiscipline && <Row label="Coaching Discipline" value={admission.coachingDiscipline} />}
+          {admission.coachingDiscipline && <Row label="Discipline" value={admission.coachingDiscipline} />}
           <Row label="Batch" value={admission.batch.label} />
         </Section>
 
@@ -71,7 +72,7 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
           <Row label="Blood Group" value={admission.bloodGroup} />
           <Row label="Medium of Instruction" value={admission.mediumOfInstruction} />
           <Row label="Hostel Required" value={admission.hostelRequired === null ? null : admission.hostelRequired ? "Yes" : "No"} />
-          <Row label="Coaching Discipline" value={admission.coachingDiscipline} />
+          <Row label="Discipline" value={admission.coachingDiscipline} />
         </Section>
 
         <Section title="Parent Details">
@@ -102,7 +103,15 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
             <>
               <Row label="Graduation Discipline" value={admission.academicDetails.graduationDiscipline} />
               <Row label="Graduation Institution" value={admission.academicDetails.graduationInstitution} />
-              <Row label="Graduation Year / %" value={admission.academicDetails.graduationYear ? `${admission.academicDetails.graduationYear} / ${admission.academicDetails.graduationPercentage ?? "—"}%` : null} />
+              <Row label="Graduation Status" value={admission.academicDetails.graduationStatus === "APPEARING" ? "Appearing" : admission.academicDetails.graduationStatus === "PASSED" ? "Passed" : null} />
+              <Row
+                label="Graduation Year / %"
+                value={
+                  admission.academicDetails.graduationYear
+                    ? `${admission.academicDetails.graduationYear} / ${admission.academicDetails.graduationStatus === "APPEARING" ? "Appearing" : (admission.academicDetails.graduationPercentage ?? "—")}${admission.academicDetails.graduationStatus === "APPEARING" ? "" : "%"}`
+                    : null
+                }
+              />
             </>
           )}
         </Section>
