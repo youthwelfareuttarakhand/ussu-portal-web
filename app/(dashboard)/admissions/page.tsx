@@ -39,6 +39,7 @@ export default async function AdmissionsPage() {
   const admissions = (await serverApiFetch<Admission[]>("/admissions")) ?? [];
   const columns: Column<Admission>[] = [
     { header: "Student", accessor: (row) => row.student.user.fullName },
+    { header: "Programme", accessor: (row) => row.student.programme ?? "—" },
     { header: "Status", accessor: (row) => <StatusBadge status={row.status} /> },
     {
       header: "Paid",
