@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/session";
 import { serverApiFetch } from "@/lib/server-api";
 import { DataTable, StatusBadge, type Column } from "@/components/dashboard/DataTable";
 import { Reveal } from "@/components/Reveal";
+import { formatProgramme } from "@/lib/programme";
 import type { Admission } from "@/types/api";
 
 export default async function AdmissionsPage() {
@@ -39,7 +40,7 @@ export default async function AdmissionsPage() {
   const admissions = (await serverApiFetch<Admission[]>("/admissions")) ?? [];
   const columns: Column<Admission>[] = [
     { header: "Student", accessor: (row) => row.student.user.fullName },
-    { header: "Programme", accessor: (row) => row.student.programme ?? "—" },
+    { header: "Programme", accessor: (row) => formatProgramme(row.student.programme, row.coachingDiscipline) },
     { header: "Status", accessor: (row) => <StatusBadge status={row.status} /> },
     {
       header: "Paid",
