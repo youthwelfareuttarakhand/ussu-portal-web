@@ -58,7 +58,11 @@ export function RegistrationsTable({ registrations }: { registrations: Student[]
         </select>
       </div>
       <div className="mt-4">
-        <DataTable columns={columns} rows={filtered} emptyLabel="No registrations match this filter" />
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          emptyLabel={courseFilter ? "No registrations match this filter" : "No registrations yet"}
+        />
       </div>
     </>
   );

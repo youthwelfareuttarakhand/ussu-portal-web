@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/session";
 import { serverApiFetch } from "@/lib/server-api";
-import { DataTable, StatusBadge, type Column } from "@/components/dashboard/DataTable";
+import { DataTable, StatusBadge } from "@/components/dashboard/DataTable";
+import { AdmissionsQueueTable } from "@/components/dashboard/AdmissionsQueueTable";
 import { Reveal } from "@/components/Reveal";
-import { formatProgramme } from "@/lib/programme";
 import type { Admission } from "@/types/api";
 
 export default async function AdmissionsPage() {
@@ -38,29 +38,11 @@ export default async function AdmissionsPage() {
   }
 
   const admissions = (await serverApiFetch<Admission[]>("/admissions")) ?? [];
-  const columns: Column<Admission>[] = [
-    { header: "Student", accessor: (row) => row.student.user.fullName },
-    { header: "Programme", accessor: (row) => formatProgramme(row.student.programme, row.coachingDiscipline) },
-    { header: "Status", accessor: (row) => <StatusBadge status={row.status} /> },
-    {
-      header: "Paid",
-      accessor: (row) =>
-        row.paid ? <span className="text-success">●</span> : <span className="text-faint">○</span>,
-    },
-    { header: "Submitted", accessor: (row) => new Date(row.submittedAt).toLocaleDateString() },
-  ];
 
   return (
     <div>
       <h2 className="font-display text-lg uppercase tracking-wide text-ink">Admissions Queue</h2>
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          rows={admissions}
-          emptyLabel="No applications yet"
-          rowHref={(row) => `/admissions/${row.id}`}
-        />
-      </div>
+      <AdmissionsQueueTable admissions={admissions} />
     </div>
   );
 }
