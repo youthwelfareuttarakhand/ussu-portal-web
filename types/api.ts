@@ -23,7 +23,13 @@ export type Student = {
   // Only present when the caller's query includes it (e.g. the staff
   // students list) — the id is enough to link to the admission detail view.
   // paid/status are additionally present on the registrations list.
-  admission?: { id: string; paid?: boolean; status?: AdmissionStatus; coachingDiscipline?: string | null } | null;
+  admission?: {
+    id: string;
+    paid?: boolean;
+    status?: AdmissionStatus;
+    coachingDiscipline?: string | null;
+    gender?: string | null;
+  } | null;
 };
 
 export type Staff = {
@@ -159,7 +165,7 @@ export type TrendPoint = {
 
 export type AnalyticsOverview = {
   totalRegistrations: number;
-  admissionsApproved: number;
+  admissionsCompleted: number;
   pendingAdmissions: number;
   totalStudents: number;
   totalStaff: number;

@@ -4,7 +4,7 @@ import type { AdmissionStatus } from "@/types/api";
 
 export type Column<T> = {
   header: string;
-  accessor: (row: T) => React.ReactNode;
+  accessor: (row: T, index: number) => React.ReactNode;
 };
 
 const STATUS_BADGE_CLASS: Record<AdmissionStatus, string> = {
@@ -51,7 +51,7 @@ export function DataTable<T extends { id: string }>({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {rows.map((row, index) => {
               const href = rowHref?.(row);
               return (
                 <tr
@@ -62,10 +62,10 @@ export function DataTable<T extends { id: string }>({
                     <td key={col.header} className="px-4 py-3 text-body">
                       {href ? (
                         <Link href={href} className="block">
-                          {col.accessor(row)}
+                          {col.accessor(row, index)}
                         </Link>
                       ) : (
-                        col.accessor(row)
+                        col.accessor(row, index)
                       )}
                     </td>
                   ))}

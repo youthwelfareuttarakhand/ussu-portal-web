@@ -25,7 +25,10 @@ export function useInView() {
           observer.disconnect();
         }
       },
-      { threshold: 0.1, rootMargin: "0px 0px -8% 0px" },
+      // threshold:0 fires as soon as any pixel enters, not once 10% of the
+      // element's own area is visible — a tall table can be many times the
+      // viewport height and never reach a 10% area ratio otherwise.
+      { threshold: 0, rootMargin: "0px 0px -8% 0px" },
     );
     observer.observe(node);
     return () => observer.disconnect();

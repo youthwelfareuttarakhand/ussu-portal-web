@@ -2,22 +2,50 @@
 
 import { useMemo, useState } from "react";
 import { DataTable, StatusBadge, type Column } from "@/components/dashboard/DataTable";
+import { PAGE_SIZE, PaginationControls, usePagination } from "@/components/dashboard/Pagination";
 import { formatProgramme } from "@/lib/programme";
 import type { Admission } from "@/types/api";
 
 export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }) {
   const [courseFilter, setCourseFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
+  const [disciplineFilter, setDisciplineFilter] = useState("");
 
   const courses = useMemo(
     () => Array.from(new Set(admissions.map((a) => formatProgramme(a.student.programme)).filter((c) => c !== "—"))),
     [admissions],
   );
 
-  const filtered = courseFilter
-    ? admissions.filter((a) => formatProgramme(a.student.programme) === courseFilter)
-    : admissions;
+  const genders = useMemo(
+    () => Array.from(new Set(admissions.map((a) => a.gender).filter(Boolean))) as string[],
+    [admissions],
+  );
+
+  // coachingDiscipline only exists on Diploma in Sports Coaching applications.
+  const isDiplomaSelected = courseFilter === "Diploma in Sports Coaching";
+
+  const disciplines = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          admissions
+            .filter((a) => formatProgramme(a.student.programme) === "Diploma in Sports Coaching")
+            .map((a) => a.coachingDiscipline)
+            .filter(Boolean),
+        ),
+      ) as string[],
+    [admissions],
+  );
+
+  const filtered = admissions
+    .filter((a) => !courseFilter || formatProgramme(a.student.programme) === courseFilter)
+    .filter((a) => !genderFilter || a.gender === genderFilter)
+    .filter((a) => !isDiplomaSelected || !disciplineFilter || a.coachingDiscipline === disciplineFilter);
+
+  const { page, setPage, totalPages, paged } = usePagination(filtered);
 
   const columns: Column<Admission>[] = [
+    { header: "S.No.", accessor: (_row, index) => (page - 1) * PAGE_SIZE + index + 1 },
     { header: "Student", accessor: (row) => row.student.user.fullName },
     { header: "Programme", accessor: (row) => formatProgramme(row.student.programme, row.coachingDiscipline) },
     { header: "Status", accessor: (row) => <StatusBadge status={row.status} /> },
@@ -34,7 +62,10 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
       <div className="mt-4 flex flex-wrap gap-3">
         <select
           value={courseFilter}
-          onChange={(e) => setCourseFilter(e.target.value)}
+          onChange={(e) => {
+            setCourseFilter(e.target.value);
+            setDisciplineFilter("");
+          }}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
         >
           <option value="">All Courses</option>
@@ -44,15 +75,44 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
             </option>
           ))}
         </select>
+        {isDiplomaSelected && (
+          <select
+            value={disciplineFilter}
+            onChange={(e) => setDisciplineFilter(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+          >
+            <option value="">All Sports</option>
+            {disciplines.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        )}
+        <select
+          value={genderFilter}
+          onChange={(e) => setGenderFilter(e.target.value)}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+        >
+          <option value="">All Genders</option>
+          {genders.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="mt-4">
         <DataTable
           columns={columns}
-          rows={filtered}
-          emptyLabel={courseFilter ? "No applications match this filter" : "No applications yet"}
+          rows={paged}
+          emptyLabel={
+            courseFilter || genderFilter || disciplineFilter ? "No applications match this filter" : "No applications yet"
+          }
           rowHref={(row) => `/admissions/${row.id}`}
         />
       </div>
+      <PaginationControls page={page} totalPages={totalPages} onChange={setPage} />
     </>
   );
 }

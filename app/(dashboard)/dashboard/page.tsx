@@ -62,7 +62,7 @@ async function AdminDashboard() {
   const stats: Stat[] = overview
     ? [
         { label: "Total Registrations", value: overview.totalRegistrations, tone: "primary", icon: ClipboardList },
-        { label: "Admissions Approved", value: overview.admissionsApproved, tone: "gold", icon: CheckCircle2 },
+        { label: "Admission Completed", value: overview.admissionsCompleted, tone: "gold", icon: CheckCircle2 },
         { label: "Pending Admissions", value: overview.pendingAdmissions, tone: "accent", icon: Eye },
         { label: "Total Students", value: overview.totalStudents, tone: "primary", icon: GraduationCap },
         { label: "Total Staff", value: overview.totalStaff, tone: "gold", icon: UserCog },
