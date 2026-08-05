@@ -34,7 +34,7 @@ async function statsForNonAdmin(role: string): Promise<Stat[]> {
   const pending = admissions.filter((a) => PENDING_STATUSES.has(a.status)).length;
   const students = (await serverApiFetch<{ id: string }[]>("/students")) ?? [];
   return [
-    { label: "Pending Admissions", value: pending, tone: "accent", icon: ClipboardList },
+    { label: "Pending Registration", value: pending, tone: "accent", icon: ClipboardList },
     { label: "Students", value: students.length, tone: "primary", icon: GraduationCap },
   ];
 }
@@ -62,8 +62,8 @@ async function AdminDashboard() {
   const stats: Stat[] = overview
     ? [
         { label: "Total Registrations", value: overview.totalRegistrations, tone: "primary", icon: ClipboardList },
-        { label: "Admission Completed", value: overview.admissionsCompleted, tone: "gold", icon: CheckCircle2 },
-        { label: "Pending Admissions", value: overview.pendingAdmissions, tone: "accent", icon: Eye },
+        { label: "Registration Completed", value: overview.admissionsCompleted, tone: "gold", icon: CheckCircle2 },
+        { label: "Pending Registration", value: overview.pendingAdmissions, tone: "accent", icon: Eye },
         { label: "Total Students", value: overview.totalStudents, tone: "primary", icon: GraduationCap },
         { label: "Total Staff", value: overview.totalStaff, tone: "gold", icon: UserCog },
       ]
