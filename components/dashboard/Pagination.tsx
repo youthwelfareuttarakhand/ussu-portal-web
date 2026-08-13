@@ -18,6 +18,21 @@ export function usePagination<T>(items: T[]) {
   return { page, setPage, totalPages, paged };
 }
 
+/** Builds the list of page numbers/ellipsis markers to render, keeping first, last, and a window around `page`. */
+function buildPageItems(page: number, totalPages: number, siblings = 2): (number | "ellipsis")[] {
+  const items: (number | "ellipsis")[] = [];
+  const start = Math.max(2, page - siblings);
+  const end = Math.min(totalPages - 1, page + siblings);
+
+  items.push(1);
+  if (start > 2) items.push("ellipsis");
+  for (let p = start; p <= end; p++) items.push(p);
+  if (end < totalPages - 1) items.push("ellipsis");
+  if (totalPages > 1) items.push(totalPages);
+
+  return items;
+}
+
 export function PaginationControls({
   page,
   totalPages,
@@ -29,8 +44,10 @@ export function PaginationControls({
 }) {
   if (totalPages <= 1) return null;
 
+  const items = buildPageItems(page, totalPages);
+
   return (
-    <div className="mt-4 flex items-center justify-center gap-4 text-sm">
+    <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
       <button
         type="button"
         onClick={() => onChange(page - 1)}
@@ -39,9 +56,29 @@ export function PaginationControls({
       >
         Previous
       </button>
-      <span className="text-muted">
-        Page {page} of {totalPages}
-      </span>
+
+      {items.map((item, i) =>
+        item === "ellipsis" ? (
+          <span key={`ellipsis-${i}`} className="px-1 text-muted">
+            …
+          </span>
+        ) : (
+          <button
+            key={item}
+            type="button"
+            onClick={() => onChange(item)}
+            aria-current={item === page ? "page" : undefined}
+            className={
+              item === page
+                ? "rounded-lg bg-primary px-3 py-1.5 font-semibold text-white"
+                : "rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-ink hover:bg-slate-50"
+            }
+          >
+            {item}
+          </button>
+        ),
+      )}
+
       <button
         type="button"
         onClick={() => onChange(page + 1)}
