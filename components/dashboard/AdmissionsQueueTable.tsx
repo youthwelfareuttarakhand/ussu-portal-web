@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Download } from "lucide-react";
 import { DataTable, StatusBadge, type Column } from "@/components/dashboard/DataTable";
 import { PAGE_SIZE, PaginationControls, usePagination } from "@/components/dashboard/Pagination";
 import { formatProgramme } from "@/lib/programme";
+import { exportToExcel } from "@/lib/export-excel";
 import type { Admission } from "@/types/api";
 
 export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }) {
@@ -43,6 +45,21 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
     .filter((a) => !isDiplomaSelected || !disciplineFilter || a.coachingDiscipline === disciplineFilter);
 
   const { page, setPage, totalPages, paged } = usePagination(filtered);
+
+  function handleExport() {
+    exportToExcel(
+      filtered,
+      [
+        { header: "S.No.", value: (_row, index) => index + 1 },
+        { header: "Student", value: (row) => row.student.user.fullName },
+        { header: "Programme", value: (row) => formatProgramme(row.student.programme, row.coachingDiscipline) },
+        { header: "Status", value: (row) => row.status },
+        { header: "Paid", value: (row) => (row.paid ? "Yes" : "No") },
+        { header: "Submitted", value: (row) => new Date(row.submittedAt).toLocaleDateString() },
+      ],
+      "admissions-queue.xlsx",
+    );
+  }
 
   const columns: Column<Admission>[] = [
     { header: "S.No.", accessor: (_row, index) => (page - 1) * PAGE_SIZE + index + 1 },
@@ -101,6 +118,15 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
             </option>
           ))}
         </select>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={filtered.length === 0}
+          className="ml-auto flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Download size={16} />
+          Export to Excel
+        </button>
       </div>
       <div className="mt-4">
         <DataTable

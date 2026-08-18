@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { Download } from "lucide-react";
 import { DataTable, StatusBadge, type Column } from "@/components/dashboard/DataTable";
 import { PAGE_SIZE, PaginationControls, usePagination } from "@/components/dashboard/Pagination";
 import { formatProgramme } from "@/lib/programme";
+import { exportToExcel } from "@/lib/export-excel";
 import type { Student } from "@/types/api";
 
 function statusLabel(admission: Student["admission"]) {
@@ -12,6 +14,12 @@ function statusLabel(admission: Student["admission"]) {
   if (!admission.paid) return <span className="text-warning">In progress</span>;
   if (!admission.status) return <span className="text-faint">—</span>;
   return <StatusBadge status={admission.status} />;
+}
+
+function statusText(admission: Student["admission"]) {
+  if (!admission) return "Not started";
+  if (!admission.paid) return "In progress";
+  return admission.status ?? "—";
 }
 
 export function RegistrationsTable({ registrations }: { registrations: Student[] }) {
@@ -51,6 +59,22 @@ export function RegistrationsTable({ registrations }: { registrations: Student[]
     .filter((r) => !isDiplomaSelected || !disciplineFilter || r.admission?.coachingDiscipline === disciplineFilter);
 
   const { page, setPage, totalPages, paged } = usePagination(filtered);
+
+  function handleExport() {
+    exportToExcel(
+      filtered,
+      [
+        { header: "S.No.", value: (_row, index) => index + 1 },
+        { header: "Reg. No.", value: (row) => row.user.registrationNumber ?? "—" },
+        { header: "Name", value: (row) => row.user.fullName ?? "—" },
+        { header: "Email", value: (row) => row.user.email },
+        { header: "Phone", value: (row) => row.user.phone ?? "—" },
+        { header: "Course", value: (row) => formatProgramme(row.programme, row.admission?.coachingDiscipline) },
+        { header: "Application Status", value: (row) => statusText(row.admission) },
+      ],
+      "registrations.xlsx",
+    );
+  }
 
   const columns: Column<Student>[] = [
     { header: "S.No.", accessor: (_row, index) => (page - 1) * PAGE_SIZE + index + 1 },
@@ -115,6 +139,15 @@ export function RegistrationsTable({ registrations }: { registrations: Student[]
             </option>
           ))}
         </select>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={filtered.length === 0}
+          className="ml-auto flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Download size={16} />
+          Export to Excel
+        </button>
       </div>
       <div className="mt-4">
         <DataTable
