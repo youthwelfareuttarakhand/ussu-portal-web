@@ -53,6 +53,7 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
         { header: "S.No.", value: (_row, index) => index + 1 },
         { header: "Student", value: (row) => row.student.user.fullName },
         { header: "Programme", value: (row) => formatProgramme(row.student.programme, row.coachingDiscipline) },
+        { header: "Roll No.", value: (row) => row.student.rollNumber ?? "" },
         { header: "Status", value: (row) => row.status },
         { header: "Paid", value: (row) => (row.paid ? "Yes" : "No") },
         { header: "Submitted", value: (row) => new Date(row.submittedAt).toLocaleDateString() },
@@ -65,6 +66,7 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
     { header: "S.No.", accessor: (_row, index) => (page - 1) * PAGE_SIZE + index + 1 },
     { header: "Student", accessor: (row) => row.student.user.fullName },
     { header: "Programme", accessor: (row) => formatProgramme(row.student.programme, row.coachingDiscipline) },
+    { header: "Roll No.", accessor: (row) => row.student.rollNumber ?? "—" },
     { header: "Status", accessor: (row) => <StatusBadge status={row.status} /> },
     {
       header: "Paid",
@@ -72,6 +74,25 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
         row.paid ? <span className="text-success">●</span> : <span className="text-faint">○</span>,
     },
     { header: "Submitted", accessor: (row) => new Date(row.submittedAt).toLocaleDateString() },
+    {
+      header: "Admit Card",
+      disableRowLink: true,
+      accessor: (row) =>
+        row.student.rollNumber ? (
+          <a
+            href={`/api/admissions/${row.id}/admit-card`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Download Admit Card"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download size={14} />
+          </a>
+        ) : (
+          <span className="text-faint">—</span>
+        ),
+    },
   ];
 
   return (

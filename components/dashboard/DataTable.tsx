@@ -5,6 +5,10 @@ import type { AdmissionStatus } from "@/types/api";
 export type Column<T> = {
   header: string;
   accessor: (row: T, index: number) => React.ReactNode;
+  // Set for action columns (e.g. a download link) that shouldn't be wrapped
+  // in the row's navigation Link — nesting an <a> inside it would either be
+  // invalid HTML or hijack the click into a row-navigation instead.
+  disableRowLink?: boolean;
 };
 
 const STATUS_BADGE_CLASS: Record<AdmissionStatus, string> = {
@@ -60,7 +64,7 @@ export function DataTable<T extends { id: string }>({
                 >
                   {columns.map((col) => (
                     <td key={col.header} className="px-4 py-3 text-body">
-                      {href ? (
+                      {href && !col.disableRowLink ? (
                         <Link href={href} className="block">
                           {col.accessor(row, index)}
                         </Link>

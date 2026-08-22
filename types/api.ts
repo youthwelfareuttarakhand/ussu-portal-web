@@ -148,6 +148,10 @@ export type AdmissionBatch = {
   label: string;
   isActive: boolean;
   startedAt: string;
+  examDate: string | null;
+  reportingTime: string | null;
+  examCentreName: string | null;
+  examCentreAddress: string | null;
 };
 
 export type Notice = {

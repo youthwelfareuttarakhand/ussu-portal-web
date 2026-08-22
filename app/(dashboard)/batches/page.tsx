@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarRange, Plus, X } from "lucide-react";
+import { CalendarRange, Pencil, Plus, X } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import type { AdmissionBatch } from "@/types/api";
@@ -11,6 +11,11 @@ export default function BatchesPage() {
   const [label, setLabel] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [examDate, setExamDate] = useState("");
+  const [reportingTime, setReportingTime] = useState("");
+  const [examCentreName, setExamCentreName] = useState("");
+  const [examCentreAddress, setExamCentreAddress] = useState("");
 
   function reload() {
     apiFetch<AdmissionBatch[]>("/admissions/batches")
@@ -43,6 +48,37 @@ export default function BatchesPage() {
       reload();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not close admissions. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function startEditing(batch: AdmissionBatch) {
+    setEditingId(batch.id);
+    setExamDate(batch.examDate ? batch.examDate.slice(0, 10) : "");
+    setReportingTime(batch.reportingTime ?? "");
+    setExamCentreName(batch.examCentreName ?? "");
+    setExamCentreAddress(batch.examCentreAddress ?? "");
+  }
+
+  async function saveExamDetails(id: string, e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await apiFetch(`/admissions/batches/${id}/exam-details`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          examDate: examDate ? new Date(examDate).toISOString() : undefined,
+          reportingTime: reportingTime || undefined,
+          examCentreName: examCentreName || undefined,
+          examCentreAddress: examCentreAddress || undefined,
+        }),
+      });
+      setEditingId(null);
+      reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not save exam details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -115,19 +151,89 @@ export default function BatchesPage() {
         )}
         {batches?.map((batch, i) => (
           <RevealItem key={batch.id} delayMs={i * 40}>
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <CalendarRange size={16} />
-                </span>
-                <span className="text-sm font-semibold text-ink">{batch.label}</span>
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <CalendarRange size={16} />
+                  </span>
+                  <span className="text-sm font-semibold text-ink">{batch.label}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-faint">{new Date(batch.startedAt).toLocaleDateString()}</span>
+                  {batch.isActive && (
+                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">Active</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => (editingId === batch.id ? setEditingId(null) : startEditing(batch))}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                  >
+                    <Pencil size={13} />
+                    Exam Details
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-faint">{new Date(batch.startedAt).toLocaleDateString()}</span>
-                {batch.isActive && (
-                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">Active</span>
-                )}
-              </div>
+
+              {batch.examDate || batch.reportingTime || batch.examCentreName ? (
+                <p className="mt-2 text-xs text-muted">
+                  {batch.examDate && new Date(batch.examDate).toLocaleDateString()}
+                  {batch.reportingTime && ` · ${batch.reportingTime}`}
+                  {batch.examCentreName && ` · ${batch.examCentreName}`}
+                </p>
+              ) : null}
+
+              {editingId === batch.id && (
+                <form onSubmit={(e) => saveExamDetails(batch.id, e)} className="mt-3 grid max-w-xl gap-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Exam Date</label>
+                    <input
+                      type="date"
+                      value={examDate}
+                      onChange={(e) => setExamDate(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Reporting Time</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 09:00 AM"
+                      value={reportingTime}
+                      onChange={(e) => setReportingTime(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Exam Centre Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. University Auditorium"
+                      value={examCentreName}
+                      onChange={(e) => setExamCentreName(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Exam Centre Address</label>
+                    <input
+                      type="text"
+                      value={examCentreAddress}
+                      onChange={(e) => setExamCentreAddress(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+                    >
+                      {loading ? "Saving…" : "Save Exam Details"}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </RevealItem>
         ))}
