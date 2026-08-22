@@ -7,7 +7,7 @@ import { RevealGroup, RevealItem, Reveal } from "@/components/Reveal";
 import { EyebrowSwoosh } from "@/components/EyebrowSwoosh";
 import { RegistrationTrendChart } from "@/components/dashboard/charts/RegistrationTrendChart";
 import { VisitorActivityChart } from "@/components/dashboard/charts/VisitorActivityChart";
-import type { Admission, AnalyticsOverview, Notice, VisitorStats } from "@/types/api";
+import type { Admission, AnalyticsOverview, Notice, PaginatedResult, VisitorStats } from "@/types/api";
 
 const PENDING_STATUSES = new Set(["SUBMITTED", "UNDER_REVIEW"]);
 
@@ -30,12 +30,17 @@ async function statsForNonAdmin(role: string): Promise<Stat[]> {
     ];
   }
 
-  const admissions = (await serverApiFetch<Admission[]>("/admissions")) ?? [];
-  const pending = admissions.filter((a) => PENDING_STATUSES.has(a.status)).length;
-  const students = (await serverApiFetch<{ id: string }[]>("/students")) ?? [];
+  // `all: true` — need every paid admission to count pending-by-status, not
+  // just one page of them. `/students` only needs its `total`, so a plain
+  // paginated call (default limit) is enough there — no need for `all`.
+  const [admissions, students] = await Promise.all([
+    serverApiFetch<PaginatedResult<Admission>>("/admissions?all=true"),
+    serverApiFetch<PaginatedResult<{ id: string }>>("/students"),
+  ]);
+  const pending = (admissions?.data ?? []).filter((a) => PENDING_STATUSES.has(a.status)).length;
   return [
     { label: "Pending Registration", value: pending, tone: "accent", icon: ClipboardList },
-    { label: "Students", value: students.length, tone: "primary", icon: GraduationCap },
+    { label: "Students", value: students?.total ?? 0, tone: "primary", icon: GraduationCap },
   ];
 }
 

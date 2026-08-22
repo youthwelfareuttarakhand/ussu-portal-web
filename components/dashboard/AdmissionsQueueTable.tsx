@@ -1,54 +1,55 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { Download } from "lucide-react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { DataTable, StatusBadge, type Column } from "@/components/dashboard/DataTable";
-import { PAGE_SIZE, PaginationControls, usePagination } from "@/components/dashboard/Pagination";
+import { PAGE_SIZE, PaginationControls } from "@/components/dashboard/Pagination";
 import { formatProgramme } from "@/lib/programme";
 import { exportToExcel } from "@/lib/export-excel";
-import type { Admission } from "@/types/api";
+import { apiFetch } from "@/lib/api";
+import { COURSE_OPTIONS, DISCIPLINE_OPTIONS, GENDER_OPTIONS } from "@/lib/filter-options";
+import type { Admission, PaginatedResult } from "@/types/api";
 
-export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }) {
-  const [courseFilter, setCourseFilter] = useState("");
-  const [genderFilter, setGenderFilter] = useState("");
-  const [disciplineFilter, setDisciplineFilter] = useState("");
+type Filters = { course: string; gender: string; discipline: string };
 
-  const courses = useMemo(
-    () => Array.from(new Set(admissions.map((a) => formatProgramme(a.student.programme)).filter((c) => c !== "—"))),
-    [admissions],
-  );
+export function AdmissionsQueueTable({
+  admissions,
+  total,
+  page,
+  filters,
+}: {
+  admissions: Admission[];
+  total: number;
+  page: number;
+  filters: Filters;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const genders = useMemo(
-    () => Array.from(new Set(admissions.map((a) => a.gender).filter(Boolean))) as string[],
-    [admissions],
-  );
+  const isDiplomaSelected = filters.course === "Diploma in Sports Coaching";
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // coachingDiscipline only exists on Diploma in Sports Coaching applications.
-  const isDiplomaSelected = courseFilter === "Diploma in Sports Coaching";
+  function updateParams(next: Partial<Filters & { page: number }>) {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(next)) {
+      if (value === "" || value === undefined || value === null) params.delete(key);
+      else params.set(key, String(value));
+    }
+    // Any filter change resets to page 1 — the old page number may not exist
+    // in the newly-filtered result set.
+    if (!("page" in next)) params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
-  const disciplines = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          admissions
-            .filter((a) => formatProgramme(a.student.programme) === "Diploma in Sports Coaching")
-            .map((a) => a.coachingDiscipline)
-            .filter(Boolean),
-        ),
-      ) as string[],
-    [admissions],
-  );
-
-  const filtered = admissions
-    .filter((a) => !courseFilter || formatProgramme(a.student.programme) === courseFilter)
-    .filter((a) => !genderFilter || a.gender === genderFilter)
-    .filter((a) => !isDiplomaSelected || !disciplineFilter || a.coachingDiscipline === disciplineFilter);
-
-  const { page, setPage, totalPages, paged } = usePagination(filtered);
-
-  function handleExport() {
+  async function handleExport() {
+    const qs = new URLSearchParams({ all: "true" });
+    if (filters.course) qs.set("course", filters.course);
+    if (filters.gender) qs.set("gender", filters.gender);
+    if (filters.discipline) qs.set("discipline", filters.discipline);
+    const result = await apiFetch<PaginatedResult<Admission>>(`/admissions?${qs}`);
     exportToExcel(
-      filtered,
+      result.data,
       [
         { header: "S.No.", value: (_row, index) => index + 1 },
         { header: "Student", value: (row) => row.student.user.fullName },
@@ -99,28 +100,25 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
     <>
       <div className="mt-4 flex flex-wrap gap-3">
         <select
-          value={courseFilter}
-          onChange={(e) => {
-            setCourseFilter(e.target.value);
-            setDisciplineFilter("");
-          }}
+          value={filters.course}
+          onChange={(e) => updateParams({ course: e.target.value, discipline: "" })}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
         >
           <option value="">All Courses</option>
-          {courses.map((c) => (
+          {COURSE_OPTIONS.map((c) => (
             <option key={c} value={c}>
-              {c}
+              {formatProgramme(c)}
             </option>
           ))}
         </select>
         {isDiplomaSelected && (
           <select
-            value={disciplineFilter}
-            onChange={(e) => setDisciplineFilter(e.target.value)}
+            value={filters.discipline}
+            onChange={(e) => updateParams({ discipline: e.target.value })}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
           >
             <option value="">All Sports</option>
-            {disciplines.map((d) => (
+            {DISCIPLINE_OPTIONS.map((d) => (
               <option key={d} value={d}>
                 {d}
               </option>
@@ -128,12 +126,12 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
           </select>
         )}
         <select
-          value={genderFilter}
-          onChange={(e) => setGenderFilter(e.target.value)}
+          value={filters.gender}
+          onChange={(e) => updateParams({ gender: e.target.value })}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
         >
           <option value="">All Genders</option>
-          {genders.map((g) => (
+          {GENDER_OPTIONS.map((g) => (
             <option key={g} value={g}>
               {g}
             </option>
@@ -142,7 +140,7 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
         <button
           type="button"
           onClick={handleExport}
-          disabled={filtered.length === 0}
+          disabled={total === 0}
           className="ml-auto flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download size={16} />
@@ -152,14 +150,14 @@ export function AdmissionsQueueTable({ admissions }: { admissions: Admission[] }
       <div className="mt-4">
         <DataTable
           columns={columns}
-          rows={paged}
+          rows={admissions}
           emptyLabel={
-            courseFilter || genderFilter || disciplineFilter ? "No applications match this filter" : "No applications yet"
+            filters.course || filters.gender || filters.discipline ? "No applications match this filter" : "No applications yet"
           }
           rowHref={(row) => `/admissions/${row.id}`}
         />
       </div>
-      <PaginationControls page={page} totalPages={totalPages} onChange={setPage} />
+      <PaginationControls page={page} totalPages={totalPages} onChange={(p) => updateParams({ page: p })} />
     </>
   );
 }

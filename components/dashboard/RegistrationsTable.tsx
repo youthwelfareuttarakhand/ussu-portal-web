@@ -1,13 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Download } from "lucide-react";
 import { DataTable, StatusBadge, type Column } from "@/components/dashboard/DataTable";
-import { PAGE_SIZE, PaginationControls, usePagination } from "@/components/dashboard/Pagination";
+import { PAGE_SIZE, PaginationControls } from "@/components/dashboard/Pagination";
 import { formatProgramme } from "@/lib/programme";
 import { exportToExcel } from "@/lib/export-excel";
-import type { Student } from "@/types/api";
+import { apiFetch } from "@/lib/api";
+import { COURSE_OPTIONS, DISCIPLINE_OPTIONS, GENDER_OPTIONS } from "@/lib/filter-options";
+import type { PaginatedResult, Student } from "@/types/api";
+
+type Filters = { course: string; gender: string; discipline: string };
 
 function statusLabel(admission: Student["admission"]) {
   if (!admission) return <span className="text-faint">Not started</span>;
@@ -22,47 +26,42 @@ function statusText(admission: Student["admission"]) {
   return admission.status ?? "—";
 }
 
-export function RegistrationsTable({ registrations }: { registrations: Student[] }) {
-  const [courseFilter, setCourseFilter] = useState("");
-  const [genderFilter, setGenderFilter] = useState("");
-  const [disciplineFilter, setDisciplineFilter] = useState("");
+export function RegistrationsTable({
+  registrations,
+  total,
+  page,
+  filters,
+}: {
+  registrations: Student[];
+  total: number;
+  page: number;
+  filters: Filters;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const courses = useMemo(
-    () => Array.from(new Set(registrations.map((r) => r.programme).filter(Boolean))) as string[],
-    [registrations],
-  );
+  const isDiplomaSelected = filters.course === "Diploma in Sports Coaching";
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const genders = useMemo(
-    () => Array.from(new Set(registrations.map((r) => r.admission?.gender).filter(Boolean))) as string[],
-    [registrations],
-  );
+  function updateParams(next: Partial<Filters & { page: number }>) {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(next)) {
+      if (value === "" || value === undefined || value === null) params.delete(key);
+      else params.set(key, String(value));
+    }
+    if (!("page" in next)) params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
-  // coachingDiscipline only exists on Diploma in Sports Coaching applications.
-  const isDiplomaSelected = courseFilter !== "" && formatProgramme(courseFilter) === "Diploma in Sports Coaching";
-
-  const disciplines = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          registrations
-            .filter((r) => formatProgramme(r.programme) === "Diploma in Sports Coaching")
-            .map((r) => r.admission?.coachingDiscipline)
-            .filter(Boolean),
-        ),
-      ) as string[],
-    [registrations],
-  );
-
-  const filtered = registrations
-    .filter((r) => !courseFilter || r.programme === courseFilter)
-    .filter((r) => !genderFilter || r.admission?.gender === genderFilter)
-    .filter((r) => !isDiplomaSelected || !disciplineFilter || r.admission?.coachingDiscipline === disciplineFilter);
-
-  const { page, setPage, totalPages, paged } = usePagination(filtered);
-
-  function handleExport() {
+  async function handleExport() {
+    const qs = new URLSearchParams({ all: "true" });
+    if (filters.course) qs.set("course", filters.course);
+    if (filters.gender) qs.set("gender", filters.gender);
+    if (filters.discipline) qs.set("discipline", filters.discipline);
+    const result = await apiFetch<PaginatedResult<Student>>(`/students/registrations?${qs}`);
     exportToExcel(
-      filtered,
+      result.data,
       [
         { header: "S.No.", value: (_row, index) => index + 1 },
         { header: "Reg. No.", value: (row) => row.user.registrationNumber ?? "—" },
@@ -99,15 +98,12 @@ export function RegistrationsTable({ registrations }: { registrations: Student[]
     <>
       <div className="mt-4 flex flex-wrap gap-3">
         <select
-          value={courseFilter}
-          onChange={(e) => {
-            setCourseFilter(e.target.value);
-            setDisciplineFilter("");
-          }}
+          value={filters.course}
+          onChange={(e) => updateParams({ course: e.target.value, discipline: "" })}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
         >
           <option value="">All Courses</option>
-          {courses.map((c) => (
+          {COURSE_OPTIONS.map((c) => (
             <option key={c} value={c}>
               {formatProgramme(c)}
             </option>
@@ -115,12 +111,12 @@ export function RegistrationsTable({ registrations }: { registrations: Student[]
         </select>
         {isDiplomaSelected && (
           <select
-            value={disciplineFilter}
-            onChange={(e) => setDisciplineFilter(e.target.value)}
+            value={filters.discipline}
+            onChange={(e) => updateParams({ discipline: e.target.value })}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
           >
             <option value="">All Sports</option>
-            {disciplines.map((d) => (
+            {DISCIPLINE_OPTIONS.map((d) => (
               <option key={d} value={d}>
                 {d}
               </option>
@@ -128,12 +124,12 @@ export function RegistrationsTable({ registrations }: { registrations: Student[]
           </select>
         )}
         <select
-          value={genderFilter}
-          onChange={(e) => setGenderFilter(e.target.value)}
+          value={filters.gender}
+          onChange={(e) => updateParams({ gender: e.target.value })}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
         >
           <option value="">All Genders</option>
-          {genders.map((g) => (
+          {GENDER_OPTIONS.map((g) => (
             <option key={g} value={g}>
               {g}
             </option>
@@ -142,7 +138,7 @@ export function RegistrationsTable({ registrations }: { registrations: Student[]
         <button
           type="button"
           onClick={handleExport}
-          disabled={filtered.length === 0}
+          disabled={total === 0}
           className="ml-auto flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download size={16} />
@@ -152,13 +148,13 @@ export function RegistrationsTable({ registrations }: { registrations: Student[]
       <div className="mt-4">
         <DataTable
           columns={columns}
-          rows={paged}
+          rows={registrations}
           emptyLabel={
-            courseFilter || genderFilter || disciplineFilter ? "No registrations match this filter" : "No registrations yet"
+            filters.course || filters.gender || filters.discipline ? "No registrations match this filter" : "No registrations yet"
           }
         />
       </div>
-      <PaginationControls page={page} totalPages={totalPages} onChange={setPage} />
+      <PaginationControls page={page} totalPages={totalPages} onChange={(p) => updateParams({ page: p })} />
     </>
   );
 }

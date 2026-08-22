@@ -4,9 +4,14 @@ import { serverApiFetch } from "@/lib/server-api";
 import { DataTable, StatusBadge } from "@/components/dashboard/DataTable";
 import { AdmissionsQueueTable } from "@/components/dashboard/AdmissionsQueueTable";
 import { Reveal } from "@/components/Reveal";
-import type { Admission } from "@/types/api";
+import { PAGE_SIZE } from "@/components/dashboard/Pagination";
+import type { Admission, PaginatedResult } from "@/types/api";
 
-export default async function AdmissionsPage() {
+export default async function AdmissionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; course?: string; gender?: string; discipline?: string }>;
+}) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
@@ -37,12 +42,24 @@ export default async function AdmissionsPage() {
     );
   }
 
-  const admissions = (await serverApiFetch<Admission[]>("/admissions")) ?? [];
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
+  const qs = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+  if (sp.course) qs.set("course", sp.course);
+  if (sp.gender) qs.set("gender", sp.gender);
+  if (sp.discipline) qs.set("discipline", sp.discipline);
+
+  const result = await serverApiFetch<PaginatedResult<Admission>>(`/admissions?${qs}`);
 
   return (
     <div>
       <h2 className="font-display text-lg uppercase tracking-wide text-ink">Admissions Queue</h2>
-      <AdmissionsQueueTable admissions={admissions} />
+      <AdmissionsQueueTable
+        admissions={result?.data ?? []}
+        total={result?.total ?? 0}
+        page={page}
+        filters={{ course: sp.course ?? "", gender: sp.gender ?? "", discipline: sp.discipline ?? "" }}
+      />
     </div>
   );
 }

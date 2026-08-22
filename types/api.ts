@@ -1,5 +1,10 @@
 import type { Role } from "@/lib/roles";
 
+// Shape returned by the now-paginated staff list endpoints (/admissions,
+// /students, /students/registrations) — `all=true` still returns every
+// matching row (for Export to Excel), just under the same {data,total} shape.
+export type PaginatedResult<T> = { data: T[]; total: number };
+
 export type User = {
   id: string;
   email: string;
