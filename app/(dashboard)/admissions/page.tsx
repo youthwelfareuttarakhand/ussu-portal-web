@@ -4,7 +4,7 @@ import { serverApiFetch } from "@/lib/server-api";
 import { DataTable, StatusBadge } from "@/components/dashboard/DataTable";
 import { AdmissionsQueueTable } from "@/components/dashboard/AdmissionsQueueTable";
 import { Reveal } from "@/components/Reveal";
-import { PAGE_SIZE } from "@/components/dashboard/Pagination";
+import { PAGE_SIZE } from "@/lib/constants";
 import type { Admission, PaginatedResult } from "@/types/api";
 
 export default async function AdmissionsPage({
