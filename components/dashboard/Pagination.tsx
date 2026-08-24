@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PAGE_SIZE } from "@/lib/constants";
 
-export const PAGE_SIZE = 10;
+export { PAGE_SIZE };
 
 /** Paginates `items` client-side, resetting to page 1 whenever the filtered set changes. */
 export function usePagination<T>(items: T[]) {

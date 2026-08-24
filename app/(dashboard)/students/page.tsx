@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/session";
 import { serverApiFetch } from "@/lib/server-api";
 import { DataTable, type Column } from "@/components/dashboard/DataTable";
-import { PAGE_SIZE } from "@/components/dashboard/Pagination";
+import { PAGE_SIZE } from "@/lib/constants";
 import type { PaginatedResult, Student } from "@/types/api";
 
 export default async function StudentsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
