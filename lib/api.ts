@@ -29,11 +29,14 @@ async function refresh(): Promise<boolean> {
 
 /** Thin fetch wrapper: cookie-based auth, one 401->refresh retry, typed errors. */
 export async function apiFetch<T>(path: string, opts: RequestInit = {}, _retried = false): Promise<T> {
+  // FormData bodies (file uploads) must NOT get a manual Content-Type — the
+  // browser sets its own multipart boundary. Only default to JSON otherwise.
+  const isFormData = typeof FormData !== "undefined" && opts.body instanceof FormData;
   const res = await fetch(`${API_URL}${path}`, {
     ...opts,
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...opts.headers,
     },
   });
