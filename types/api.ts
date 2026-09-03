@@ -165,6 +165,7 @@ export type Notice = {
   body: string;
   postedBy: string;
   createdAt: string;
+  attachmentFilename: string | null;
 };
 
 export type TrendPoint = {
