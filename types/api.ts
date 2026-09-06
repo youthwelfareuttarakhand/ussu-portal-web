@@ -35,6 +35,8 @@ export type Student = {
     coachingDiscipline?: string | null;
     gender?: string | null;
   } | null;
+  // Present on the staff students list only — see StudentsService.findAll.
+  feeStatus?: "PAID" | "PARTIAL" | "UNPAID" | "NA";
 };
 
 export type Staff = {
