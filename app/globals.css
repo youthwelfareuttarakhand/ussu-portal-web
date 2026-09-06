@@ -31,3 +31,9 @@ html.high-contrast .border-slate-100,
 html.high-contrast .border-dashed {
   border-color: #000000 !important;
 }
+
+@media print {
+  [data-print-hidden] {
+    display: none !important;
+  }
+}

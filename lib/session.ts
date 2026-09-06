@@ -1,25 +1,29 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 import type { SessionUser } from "./auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const SESSION_COOKIE = "ussu_token";
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 
-// React's cache() dedupes calls with the same arguments within one request —
-// the dashboard layout and nearly every page under it each called this,
-// which meant a redundant /auth/me round trip per navigation on top of the
-// layout's own call. Wrapping it means only one network call per request.
+// Verifies the session cookie locally (same secret ussu-api signs with)
+// instead of round-tripping to /auth/me over the network. That network call
+// ran on every single navigation for every role — a real, measurable chunk
+// of felt latency on staging/production once cold-starts and DB region were
+// ruled out. jwt.verify() checks signature + expiry; a forged/expired/
+// tampered cookie throws and this returns null, same as a failed /auth/me
+// call did.
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE);
-  if (!token) return null;
+  if (!token || !JWT_ACCESS_SECRET) return null;
 
-  const res = await fetch(`${API_URL}/auth/me`, {
-    headers: { cookie: `${SESSION_COOKIE}=${token.value}` },
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  return (await res.json()) as SessionUser;
+  try {
+    const payload = jwt.verify(token.value, JWT_ACCESS_SECRET) as SessionUser;
+    return payload;
+  } catch {
+    return null;
+  }
 });
 
 export { SESSION_COOKIE };

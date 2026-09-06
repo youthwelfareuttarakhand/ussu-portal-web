@@ -4,7 +4,7 @@ import { getSessionUser } from "@/lib/session";
 import { serverApiFetch } from "@/lib/server-api";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Topbar } from "@/components/dashboard/Topbar";
-import type { Admission } from "@/types/api";
+import type { AdmissionStatusSummary } from "@/types/api";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
@@ -16,8 +16,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // filling the form, paid but awaiting review, or rejected) are blocked
   // here and pointed back to the applicant dashboard on ussu-web instead.
   if (user.role === "STUDENT") {
-    const admission = await serverApiFetch<Admission>("/admissions/me");
-    const ukssuId = admission?.student.user.ukssuId ?? null;
+    const admission = await serverApiFetch<AdmissionStatusSummary>("/admissions/me/status");
+    const ukssuId = admission?.ukssuId ?? null;
     if (!ukssuId) {
       const message =
         admission?.status === "REJECTED"
@@ -44,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex min-h-screen">
       <Sidebar role={user.role} />
-      <div className="flex flex-1 flex-col md:ml-60">
+      <div className="flex flex-1 flex-col md:ml-60 print:ml-0">
         <Topbar email={user.email} role={user.role} title="USSU Portal" />
         <main className="min-h-screen flex-1 bg-surface p-4 md:p-8">
           <div className="mx-auto max-w-6xl">{children}</div>
