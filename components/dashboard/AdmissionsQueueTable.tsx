@@ -1,6 +1,7 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Download, Search } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { DataTable, StatusBadge, type Column } from "@/components/dashboard/DataTable";
 import { PAGE_SIZE, PaginationControls } from "@/components/dashboard/Pagination";
@@ -10,7 +11,7 @@ import { apiFetch } from "@/lib/api";
 import { COURSE_OPTIONS, DISCIPLINE_OPTIONS, GENDER_OPTIONS } from "@/lib/filter-options";
 import type { Admission, PaginatedResult } from "@/types/api";
 
-type Filters = { course: string; gender: string; discipline: string };
+type Filters = { course: string; gender: string; discipline: string; search: string };
 
 export function AdmissionsQueueTable({
   admissions,
@@ -30,6 +31,17 @@ export function AdmissionsQueueTable({
   const isDiplomaSelected = filters.course === "Diploma in Sports Coaching";
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  // Debounced so typing doesn't push a new URL (and re-fetch) on every
+  // keystroke — waits 400ms after the user stops typing.
+  const [searchInput, setSearchInput] = useState(filters.search);
+  useEffect(() => setSearchInput(filters.search), [filters.search]);
+  useEffect(() => {
+    if (searchInput === filters.search) return;
+    const timeout = setTimeout(() => updateParams({ search: searchInput }), 400);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
+
   function updateParams(next: Partial<Filters & { page: number }>) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(next)) {
@@ -47,6 +59,7 @@ export function AdmissionsQueueTable({
     if (filters.course) qs.set("course", filters.course);
     if (filters.gender) qs.set("gender", filters.gender);
     if (filters.discipline) qs.set("discipline", filters.discipline);
+    if (filters.search) qs.set("search", filters.search);
     const result = await apiFetch<PaginatedResult<Admission>>(`/admissions?${qs}`);
     exportToExcel(
       result.data,
@@ -99,6 +112,16 @@ export function AdmissionsQueueTable({
   return (
     <>
       <div className="mt-4 flex flex-wrap gap-3">
+        <div className="relative">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search name, email, or roll no."
+            className="w-64 rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+          />
+        </div>
         <select
           value={filters.course}
           onChange={(e) => updateParams({ course: e.target.value, discipline: "" })}

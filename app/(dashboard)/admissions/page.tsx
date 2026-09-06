@@ -10,7 +10,7 @@ import type { Admission, PaginatedResult } from "@/types/api";
 export default async function AdmissionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; course?: string; gender?: string; discipline?: string }>;
+  searchParams: Promise<{ page?: string; course?: string; gender?: string; discipline?: string; search?: string }>;
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
@@ -48,6 +48,7 @@ export default async function AdmissionsPage({
   if (sp.course) qs.set("course", sp.course);
   if (sp.gender) qs.set("gender", sp.gender);
   if (sp.discipline) qs.set("discipline", sp.discipline);
+  if (sp.search) qs.set("search", sp.search);
 
   const result = await serverApiFetch<PaginatedResult<Admission>>(`/admissions?${qs}`);
 
@@ -58,7 +59,7 @@ export default async function AdmissionsPage({
         admissions={result?.data ?? []}
         total={result?.total ?? 0}
         page={page}
-        filters={{ course: sp.course ?? "", gender: sp.gender ?? "", discipline: sp.discipline ?? "" }}
+        filters={{ course: sp.course ?? "", gender: sp.gender ?? "", discipline: sp.discipline ?? "", search: sp.search ?? "" }}
       />
     </div>
   );
