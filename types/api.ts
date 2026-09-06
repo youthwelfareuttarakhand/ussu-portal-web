@@ -35,6 +35,8 @@ export type Student = {
     coachingDiscipline?: string | null;
     gender?: string | null;
   } | null;
+  // Present on the staff students list only — see StudentsService.findAll.
+  feeStatus?: "PAID" | "PARTIAL" | "UNPAID" | "NA";
 };
 
 export type Staff = {
@@ -188,4 +190,31 @@ export type VisitorStats = {
   thisMonth: number;
   thisYear: number;
   trend: TrendPoint[];
+};
+
+export type AdmissionStatusSummary = {
+  ukssuId: string | null;
+  status: AdmissionStatus | null;
+  paid: boolean;
+};
+
+export type FeeCadence = "SEMESTER" | "YEAR";
+
+export type FeeStructureRow = {
+  id: string;
+  label: string;
+  cadence: FeeCadence;
+  cycleLabel: string;
+  amountPaise: number;
+  mandatory: boolean;
+  status: "PAID" | "UNPAID";
+  feePaymentId: string | null;
+  razorpayPaymentId: string | null;
+  paidAt: string | null;
+};
+
+export type PayOrder = {
+  razorpayOrderId: string;
+  razorpayKeyId: string;
+  amount: number;
 };

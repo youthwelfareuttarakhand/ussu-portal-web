@@ -3,24 +3,35 @@ export type Role = "STUDENT" | "STAFF" | "ADMIN";
 export type NavItem = {
   label: string;
   href: string;
+  children?: NavItem[];
 };
 
 const BASE_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Profile", href: "/profile" },
-  { label: "Notices", href: "/notices" },
 ];
 
+const FEES_NAV: NavItem = {
+  label: "Fees",
+  href: "/fees",
+  children: [
+    { label: "Fee Submission", href: "/fees/submission" },
+    { label: "Fee Receipt", href: "/fees/receipt" },
+  ],
+};
+
 const NAV_BY_ROLE: Record<Role, NavItem[]> = {
-  STUDENT: [...BASE_NAV, { label: "My Admission", href: "/admissions" }],
+  STUDENT: [...BASE_NAV, FEES_NAV],
   STAFF: [
     ...BASE_NAV,
+    { label: "Notices", href: "/notices" },
     { label: "Registrations", href: "/registrations" },
     { label: "Admissions Queue", href: "/admissions" },
     { label: "Students", href: "/students" },
   ],
   ADMIN: [
     ...BASE_NAV,
+    { label: "Notices", href: "/notices" },
     { label: "Registrations", href: "/registrations" },
     { label: "Admissions Queue", href: "/admissions" },
     { label: "Students", href: "/students" },
@@ -34,8 +45,10 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
 const ROUTE_ROLES: Record<string, Role[]> = {
   "/dashboard": ["STUDENT", "STAFF", "ADMIN"],
   "/profile": ["STUDENT", "STAFF", "ADMIN"],
-  "/notices": ["STUDENT", "STAFF", "ADMIN"],
-  "/admissions": ["STUDENT", "STAFF", "ADMIN"],
+  "/notices": ["STAFF", "ADMIN"],
+  "/fees/submission": ["STUDENT"],
+  "/fees/receipt": ["STUDENT"],
+  "/admissions": ["STAFF", "ADMIN"],
   "/registrations": ["STAFF", "ADMIN"],
   "/students": ["STAFF", "ADMIN"],
   "/staff": ["ADMIN"],

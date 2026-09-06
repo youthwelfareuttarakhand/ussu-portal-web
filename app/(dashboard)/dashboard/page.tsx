@@ -15,19 +15,7 @@ type Stat = { label: string; value: string | number; tone: "primary" | "accent" 
 
 async function statsForNonAdmin(role: string): Promise<Stat[]> {
   if (role === "STUDENT") {
-    const [admission, notices] = await Promise.all([
-      serverApiFetch<Admission>("/admissions/me"),
-      serverApiFetch<Notice[]>("/notices"),
-    ]);
-    return [
-      {
-        label: "Admission Status",
-        value: admission ? admission.status.replace("_", " ") : "Not submitted",
-        tone: "primary",
-        icon: ClipboardList,
-      },
-      { label: "Notices", value: (notices ?? []).length, tone: "accent", icon: Bell },
-    ];
+    return [];
   }
 
   // `all: true` — need every paid admission to count pending-by-status, not
