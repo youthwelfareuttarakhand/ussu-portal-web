@@ -14,10 +14,13 @@ import type { PaginatedResult, Student } from "@/types/api";
 
 type Filters = { course: string; gender: string; discipline: string; search: string; feeStatus: string };
 
+// PARTIAL is deliberately not offered: the portal only pays all outstanding
+// fee line items in one combined checkout (FeesService.payAll), so a student
+// can't reach a partially-paid state through normal use. The PARTIAL badge
+// maps below stay as a fallback in case a row ends up in that state manually.
 const FEE_STATUS_OPTIONS = [
   { value: "", label: "All Fee Statuses" },
   { value: "PAID", label: "Paid" },
-  { value: "PARTIAL", label: "Partially Paid" },
   { value: "UNPAID", label: "Unpaid" },
   { value: "NA", label: "Not Applicable" },
 ];
