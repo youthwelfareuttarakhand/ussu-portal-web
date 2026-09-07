@@ -37,6 +37,14 @@ export type Student = {
   } | null;
   // Present on the staff students list only — see StudentsService.findAll.
   feeStatus?: "PAID" | "PARTIAL" | "UNPAID" | "NA";
+  // Rupee breakdown (in paise) for the Excel export — staff students list only.
+  feeAmounts?: {
+    totalPaise: number;
+    paidPaise: number;
+    duePaise: number;
+    tuitionPaise: number;
+    hostelPaise: number;
+  };
 };
 
 export type Staff = {
