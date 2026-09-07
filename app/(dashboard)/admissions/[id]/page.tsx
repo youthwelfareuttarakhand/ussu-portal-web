@@ -4,7 +4,15 @@ import { serverApiFetch } from "@/lib/server-api";
 import { Reveal } from "@/components/Reveal";
 import { StatusBadge } from "@/components/dashboard/DataTable";
 import { AdmissionReviewActions } from "@/components/dashboard/AdmissionReviewActions";
-import type { Admission } from "@/types/api";
+import { FeeReceipts } from "@/components/dashboard/FeeReceipts";
+import type { Admission, FeeStructureRow } from "@/types/api";
+
+const CADENCE_LABEL: Record<FeeStructureRow["cadence"], string> = {
+  SEMESTER: "Per Semester",
+  YEAR: "Per Year",
+};
+
+const formatRupees = (paise: number) => `₹${(paise / 100).toLocaleString("en-IN")}`;
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -34,9 +42,15 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
   if (!admission) notFound();
 
   const applicant = admission.student;
+  const fees = (await serverApiFetch<FeeStructureRow[]>(`/fees/student/${applicant.id}`)) ?? [];
+  const feeTotalDuePaise = fees.filter((f) => f.status === "UNPAID").reduce((sum, f) => sum + f.amountPaise, 0);
 
   return (
     <div>
+      {/* Everything except the fee receipts is screen-only — printing this page
+          is meant to produce just the receipt document, not the full applicant
+          record. */}
+      <div className="print:hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-display text-lg uppercase tracking-wide text-ink">{applicant.user.fullName}</h2>
@@ -132,6 +146,69 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
           <Row label="Paid On" value={admission.paidAt ? new Date(admission.paidAt).toLocaleDateString() : null} />
         </Section>
 
+        <div className="mt-6">
+          <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.14em] text-primary">Course Fee</p>
+          {fees.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-muted">
+              No fee structure is set up for this student&apos;s course.
+            </p>
+          ) : (
+            <>
+              <div className="overflow-hidden rounded-xl border border-slate-200">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-primary-dark text-left text-[11px] uppercase tracking-wide text-white">
+                      <th className="px-4 py-2.5 font-semibold">Fee Head</th>
+                      <th className="px-4 py-2.5 font-semibold">Billing Cycle</th>
+                      <th className="px-4 py-2.5 font-semibold">Cadence</th>
+                      <th className="px-4 py-2.5 text-right font-semibold">Amount</th>
+                      <th className="px-4 py-2.5 text-right font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {fees.map((fee) => (
+                      <tr key={fee.id}>
+                        <td className="px-4 py-2.5 font-semibold text-ink">
+                          {fee.label}
+                          {fee.amountPaise === 0 && (
+                            <span className="ml-2 text-[10.5px] font-normal uppercase tracking-wide text-faint">Not opted</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5 text-muted">{fee.cycleLabel}</td>
+                        <td className="px-4 py-2.5 text-muted">{CADENCE_LABEL[fee.cadence]}</td>
+                        <td className="px-4 py-2.5 text-right font-semibold text-ink">{formatRupees(fee.amountPaise)}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          {fee.amountPaise === 0 ? (
+                            <span className="text-xs text-faint">—</span>
+                          ) : fee.status === "PAID" ? (
+                            <span className="inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-semibold text-success">
+                              Paid
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-warning/10 px-2.5 py-0.5 text-xs font-semibold text-warning">
+                              Unpaid
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-200 bg-surface">
+                      <td className="px-4 py-2.5 font-display uppercase tracking-wide text-ink" colSpan={3}>
+                        Total Due
+                      </td>
+                      <td colSpan={2} className="px-4 py-2.5 text-right font-display text-base text-ink">
+                        {formatRupees(feeTotalDuePaise)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+
         {admission.documents.length > 0 && (
           <div className="mt-6">
             <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.14em] text-primary">Documents</p>
@@ -160,6 +237,14 @@ export default async function AdmissionDetailPage({ params }: { params: Promise<
           </div>
         )}
       </Reveal>
+      </div>
+
+      {fees.some((f) => f.status === "PAID") && (
+        <div className="mt-6 print:mt-0">
+          <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.14em] text-primary print:hidden">Fee Receipts</p>
+          <FeeReceipts admission={admission} fees={fees} />
+        </div>
+      )}
     </div>
   );
 }

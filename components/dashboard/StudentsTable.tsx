@@ -14,6 +14,10 @@ import type { PaginatedResult, Student } from "@/types/api";
 
 type Filters = { course: string; gender: string; discipline: string; search: string; feeStatus: string };
 
+// Excel cell: rupees as a number so the column can be summed; blank when the
+// student has no fee structure at all.
+const rupees = (paise: number | undefined) => (paise === undefined ? "" : paise / 100);
+
 // PARTIAL is deliberately not offered: the portal only pays all outstanding
 // fee line items in one combined checkout (FeesService.payAll), so a student
 // can't reach a partially-paid state through normal use. The PARTIAL badge
@@ -90,11 +94,17 @@ export function StudentsTable({
       result.data,
       [
         { header: "S.No.", value: (_row, index) => index + 1 },
+        { header: "Name", value: (row) => row.user.fullName ?? "" },
         { header: "Email", value: (row) => row.user.email },
         { header: "UKSSU ID", value: (row) => row.user.ukssuId ?? "" },
         { header: "Programme", value: (row) => formatProgramme(row.programme) },
         { header: "Roll No.", value: (row) => row.rollNumber ?? "" },
         { header: "Fee Status", value: (row) => (row.feeStatus ? FEE_STATUS_LABEL[row.feeStatus] : "") },
+        { header: "Tuition Fee (₹)", value: (row) => rupees(row.feeAmounts?.tuitionPaise) },
+        { header: "Hostel Fee (₹)", value: (row) => rupees(row.feeAmounts?.hostelPaise) },
+        { header: "Total Fee (₹)", value: (row) => rupees(row.feeAmounts?.totalPaise) },
+        { header: "Amount Paid (₹)", value: (row) => rupees(row.feeAmounts?.paidPaise) },
+        { header: "Amount Due (₹)", value: (row) => rupees(row.feeAmounts?.duePaise) },
       ],
       "students.xlsx",
     );
@@ -102,6 +112,7 @@ export function StudentsTable({
 
   const columns: Column<Student>[] = [
     { header: "S.No.", accessor: (_row, index) => (page - 1) * PAGE_SIZE + index + 1 },
+    { header: "Name", accessor: (row) => row.user.fullName },
     { header: "Email", accessor: (row) => row.user.email },
     { header: "UKSSU ID", accessor: (row) => row.user.ukssuId ?? "—" },
     { header: "Programme", accessor: (row) => formatProgramme(row.programme) },
@@ -123,7 +134,7 @@ export function StudentsTable({
       accessor: (row) =>
         row.admission ? (
           <Link href={`/admissions/${row.admission.id}`} className="text-xs font-bold uppercase tracking-wide text-primary hover:underline">
-            View Admission Form
+            View Details
           </Link>
         ) : null,
     },
