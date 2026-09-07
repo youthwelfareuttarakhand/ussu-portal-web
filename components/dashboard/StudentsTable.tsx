@@ -90,6 +90,7 @@ export function StudentsTable({
       result.data,
       [
         { header: "S.No.", value: (_row, index) => index + 1 },
+        { header: "Name", value: (row) => row.user.fullName ?? "" },
         { header: "Email", value: (row) => row.user.email },
         { header: "UKSSU ID", value: (row) => row.user.ukssuId ?? "" },
         { header: "Programme", value: (row) => formatProgramme(row.programme) },
@@ -102,6 +103,7 @@ export function StudentsTable({
 
   const columns: Column<Student>[] = [
     { header: "S.No.", accessor: (_row, index) => (page - 1) * PAGE_SIZE + index + 1 },
+    { header: "Name", accessor: (row) => row.user.fullName },
     { header: "Email", accessor: (row) => row.user.email },
     { header: "UKSSU ID", accessor: (row) => row.user.ukssuId ?? "—" },
     { header: "Programme", accessor: (row) => formatProgramme(row.programme) },
@@ -123,7 +125,7 @@ export function StudentsTable({
       accessor: (row) =>
         row.admission ? (
           <Link href={`/admissions/${row.admission.id}`} className="text-xs font-bold uppercase tracking-wide text-primary hover:underline">
-            View Admission Form
+            View Details
           </Link>
         ) : null,
     },
